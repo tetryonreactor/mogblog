@@ -28,7 +28,7 @@ Features
   * Blog posts can be created, edited and deleted
   * Posts can be worked on internally and later be published
   * Support for creating posts as plain text or HTML (no fancy editor yet)
-  * Markdown can be used if [parsedown.php](http://www.parsedown.org/) is downloaded and put into the
+  * Markdown can be used if [Parsedown.php](http://www.parsedown.org/) is downloaded and put into the
     admin directory next to index.php.
   * Primitive Atom (RSS) feed
 
@@ -56,4 +56,4 @@ Known issues and missing stuff
   * No paging or "archives". All posts are listed on the front page as of now.
   * Changing time zone will make all posts appear as new in the Atom feed.
   * No auto-saving or revision handling (backup) of changes.
-  * Better documentation
+  * Better documentation needed
