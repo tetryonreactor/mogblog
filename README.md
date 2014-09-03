@@ -63,3 +63,5 @@ Known issues and missing stuff
   * Changing time zone will make all posts appear as new in the Atom feed.
   * No auto-saving or revision handling (backup) of changes.
   * Better documentation needed
+  * No comment system. This is partly by design, but built-in support for Disqus or similar would be nice.
+  * No built-in search function. You have to rely on being indexed by public search engines like [DuckDuckGo](https://duckduckgo.com/)
