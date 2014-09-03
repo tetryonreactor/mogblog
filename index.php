@@ -26,6 +26,12 @@ if(file_exists('Parsedown.php')) {
   $parsedown = true;
 }
 
+$skin = false;
+if(file_exists('skin.php')) {
+  require 'skin.php';
+  $skin = true;
+}
+
 function mb_uesc($str) {
   return urlencode($str);
 }
@@ -279,7 +285,6 @@ $style
         <div class="menu">
           <ul>
             <li><a href="$rooturl">Home</a></li>
-<!--            <li><a href="$rooturl">About</a></li>-->
           </ul>
         </div>
       </div>
@@ -304,37 +309,27 @@ $header
         <span class="date">[:mb:date:]</span><br />
         <h2><a href="[:mb:url:]">[:mb:title:]</a></h2>
 [:mb:contents:]
-<!-- Cnt[:mb:cnt:] [:mb:url:]
-[:mb:first{:]first[:mb:}first:] [:mb:!first{:]!first[:mb:}!first:]
-[:mb:last{:]last[:mb:}last:] [:mb:!last{:]!last[:mb:}!last:] -->
         <div class="art_footer"></div>
       </div>
 [:mb:}articles:]
 $footer
 
 END;
-
-/*
-Cnt[:mb:cnt:] [:mb:url:]
-[:mb:first{:]first[:mb:}first:] [:mb:!first{:]!first[:mb:}!first:]
-[:mb:last{:]last[:mb:}last:] [:mb:!last{:]!last[:mb:}!last:]
-*/
-
 }
 
-function mb_default_atom() {
+function mb_render_atom() {
   return <<<END
 <?xml version="1.0" encoding="UTF-8"?>
 <feed xml:lang="en-US" xmlns="http://www.w3.org/2005/Atom"> 
   <title>[:mb:main_title:]</title>
-  <link href="[:mb:main_atom_url:]" rel="self" />
-  <link href="[:mb:main_front_url:]" />
-  <updated>[:mb:main_updated:]</updated>
+  <link href="[:mb:atom_abs_url:]" rel="self" />
+  <link href="[:mb:base_abs_url:]/" />
+  <updated>[:mb:atom_now:]</updated>
 [:mb:articles{:]
   <entry>
     <title>[:mb:title:]</title>
-    <link href="[:mb:abs_url:]" />
-    <updated>[:mb:updated:]</updated>
+    <link href="[:mb:base_abs_url:]/[:mb:url:]" />
+    <updated>[:mb:atom_date:]</updated>
     <content type="html">
       <![CDATA[[:mb:contents:]]]>
     </content>
@@ -350,15 +345,14 @@ function mb_default_article() {
   return <<<END
 $header
 <div class="art">
-<!-- [:mb:recover{:] -->
 <span class="date">[:mb:date:]</span><br />
 <h2><a href="">[:mb:title:]</a></h2>
 [:mb:contents:]
-<!-- [:mb:}recover:] -->
   <div class="art_footer"></div>
 </div>
 $footer
 <!-- [:mb:checksum:] -->
+
 END;
 }
 
@@ -643,12 +637,6 @@ function mb_get_pub_file_dir($pub_id) {
   return substr(mb_get_pub_file($pub_id), 0, -11);
 }
 
-function mb_get_pub_abs_url($pub_id) {
-  global $config;
-
-  return $config["publishurl"]."/".mb_get_pub_url($pub_id);
-}
-
 function mb_get_pub_url($pub_id) {
   return substr($pub_id, 0, -10);
 }
@@ -761,7 +749,7 @@ function mb_atom() {
 
   $posts = mb_get_post_listing(false);
 
-  $out = mb_default_atom();
+  $out = mb_render_atom();
   $out = preg_replace_callback(
     '/\[:mb:articles{:](.*?)\[:mb:}articles:]/s',
     function ($match) use ($posts) {
@@ -776,8 +764,8 @@ function mb_atom() {
 	  continue;
 
 	$out = $match[1];
-	$out = preg_replace('/\[:mb:abs_url:]/', mb_get_pub_abs_url($post["pub_id"]), $out);
-	$out = preg_replace('/\[:mb:updated:]/', mb_atom_date($post["date"]), $out);
+	$out = preg_replace('/\[:mb:url:]/', mb_get_pub_url($post["pub_id"]), $out);
+	$out = preg_replace('/\[:mb:atom_date:]/', mb_atom_date($post["date"]), $out);
 	$out = preg_replace('/\[:mb:title:]/', mb_hesc($post["title"]), $out);
 	$out = preg_replace('/\[:mb:contents:]/', $contents, $out);
 	$totalout .= $out;
@@ -787,9 +775,9 @@ function mb_atom() {
     $out
   );
   $out = preg_replace('/\[:mb:main_title:]/', mb_hesc($config["main_title"]), $out);
-  $out = preg_replace('/\[:mb:main_front_url:]/', mb_hesc($config["publishurl"]."/"), $out);
-  $out = preg_replace('/\[:mb:main_atom_url:]/', mb_hesc($config["publishurl"]."/atom.xml"), $out);
-  $out = preg_replace('/\[:mb:main_updated:]/', mb_atom_date(date("YmdHi")), $out);
+  $out = preg_replace('/\[:mb:base_abs_url:]/', mb_hesc($config["publishurl"]), $out);
+  $out = preg_replace('/\[:mb:atom_abs_url:]/', mb_hesc($config["publishurl"]."/atom.xml"), $out);
+  $out = preg_replace('/\[:mb:atom_now:]/', mb_atom_date(date("YmdHi")), $out);
 
   $f = fopen($atom_file,"wb");
   if($f == false) {
@@ -814,7 +802,11 @@ function mb_publish() {
 
   $posts = mb_get_post_listing(false);
 
-  $out = mb_default_frontpage();
+  if (function_exists("mb_skin_frontpage")) {
+    $out = mb_skin_frontpage();
+  } else {
+    $out = mb_default_frontpage();
+  }
   $out = preg_replace_callback(
     '/\[:mb:articles{:](.*?)\[:mb:}articles:]/s',
     function ($match) use ($posts) {
@@ -859,6 +851,7 @@ function mb_publish() {
     $out
   );
   $out = preg_replace('/\[:mb:main_title:]/', mb_hesc($config["main_title"]), $out);
+  $out = preg_replace('/\[:mb:base_abs_url:]/', mb_hesc($config["publishurl"]), $out);
   $out = preg_replace('/\[:mb:checksum:[0-9a-f]*:?]/', "", $out);
 
   $f = fopen($front_file,"wb");
@@ -924,8 +917,14 @@ function mb_publish_article($src_id) {
     }
   }
 
-  $out = mb_default_article();
+  if (function_exists("mb_skin_article")) {
+    $out = mb_skin_article();
+  } else {
+    $out = mb_default_article();
+  }
   $out = preg_replace('/\[:mb:main_title:]/', mb_hesc($config["main_title"]), $out);
+  $out = preg_replace('/\[:mb:base_abs_url:]/', mb_hesc($config["publishurl"]), $out);
+  $out = preg_replace('/\[:mb:url:]/', mb_get_pub_url($pub_id), $out);
   $out = preg_replace('/\[:mb:date:]/', mb_format_date($date), $out);
   $out = preg_replace('/\[:mb:title:]/', mb_hesc($title), $out);
   $out = preg_replace('/\[:mb:contents:]/', $contents, $out);

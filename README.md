@@ -31,6 +31,7 @@ Features
   * Markdown can be used if [Parsedown.php](http://www.parsedown.org/) is downloaded and put into the
     admin directory next to index.php.
   * Primitive Atom (RSS) feed
+  * Skinning support
 
 Installation
 ------------
@@ -45,13 +46,18 @@ Installation
      you created. E.g. http://mycoolsite.com/longsecretadmindirectory/
   5. Follow the installation wizard
 
+Skins
+-----
+
+MogBlog can be customised with a skin file. An example rendering the MogBlog default theme is available as
+the file skin.php. The skin file must be named exactly like this and be placed in the same directory as index.php.
+See the comments in skin.php for explanations about the macro placeholders that can be used.
+
 Known issues and missing stuff
 ------------------------------
 
   * No support yet for uploading images or other files. You need to upload
     such things manually for now. File handling feature is planned.
-  * Custom skinning requires modifying the HTML and style inside the PHP
-    file. Pluggable skins are also planned.
   * Only one admin user can be configured.
   * No paging or "archives". All posts are listed on the front page as of now.
   * Changing time zone will make all posts appear as new in the Atom feed.
