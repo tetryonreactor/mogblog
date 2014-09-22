@@ -28,7 +28,7 @@ Features
   * Blog posts can be created, edited and deleted
   * Posts can be worked on internally and later be published
   * Support for creating posts as plain text or HTML (no fancy editor yet)
-  * Markdown can be used if [Parsedown.php](http://www.parsedown.org/) is downloaded and put into the
+  * Markdown can be used if [Parsedown.php](http://parsedown.org/) is downloaded and put into the
     admin directory next to index.php.
   * Primitive Atom (RSS) feed
   * Skinning support
