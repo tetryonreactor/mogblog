@@ -74,6 +74,7 @@ function mb_write_config() {
     fwrite($f, ";\n");
     fwrite($f, "?>\n");
     fclose($f);
+    sleep(1);    // Give the web server some time to discover that this file has changed before doing anything else.
   } else {
     print '<span style="color: red">Error: Cant write to config.php. Please check your permissions</span>';
   }
@@ -401,8 +402,6 @@ function mb_installer() {
     } else {
       $crypto = crypt($password);
       $config['admins'] = array($username => $crypto);
-      setcookie("id", $crypto, time()+60); // will be overwritten after redirect to configured value
-
       $config['datadir'] = mb_random_name();
       $config['datapattern'] = 'YYYYMMDDhhmm';
       $config['publishdir'] = '..';
@@ -413,6 +412,10 @@ function mb_installer() {
       $config['main_title'] = "Powered by MogBlog";
 
       mb_write_config();
+
+      setcookie("u", $username, time()+$config["timeout"]);
+      setcookie("ph", $crypto, time()+$config["timeout"]);
+
       mb_redirect($to="?cmd=settings");
     }
   }
@@ -438,11 +441,17 @@ function mb_installer() {
 function mb_login() {
   global $config;
 
-  $id = mb_cookie("id");
+  $cookie_u = mb_cookie("u");
+  $cookie_ph = mb_cookie("ph");
 
-  if($id != "" and $id == reset($config["admins"])) {
-    setcookie("id", $id, time()+$config["timeout"]);
-    return;
+  if($cookie_u != "") {
+    if(array_key_exists($cookie_u, $config["admins"])) {
+      if($config["admins"][$cookie_u] == $cookie_ph) {
+	setcookie("u", $cookie_u, time()+$config["timeout"]);
+	setcookie("ph", $cookie_ph, time()+$config["timeout"]);
+	return;
+      }
+    }
   }
 
   $login = mb_get("login");
@@ -458,13 +467,15 @@ function mb_login() {
     if(array_key_exists($username, $config["admins"])) {
       $stored_crypto = $config["admins"][$username];
       $entered_crypto = crypt($password, $stored_crypto);
-      if($entered_crypto == $stored_crypto) {
-        setcookie("id", $stored_crypto, time()+$config["timeout"]);
+      if($stored_crypto == "" or $entered_crypto == $stored_crypto) {
+	setcookie("u", $username, time()+$config["timeout"]);
+	setcookie("ph", $stored_crypto, time()+$config["timeout"]);
 	mb_redirect();
       }
     }
     $err_msg = '<span style="color: red">Login failed. Try again</span>';
   }
+
   mb_header();
 ?>
 <div class="art">
@@ -483,7 +494,8 @@ function mb_login() {
 }
 
 function mb_logout() {
-  setcookie("id", "", time()-3600);
+  setcookie("u", "", time()-3600);
+  setcookie("ph", "", time()-3600);
   mb_header();
 ?>
 <div class="art">
@@ -1377,13 +1389,14 @@ function mb_admins_username($username) {
 
     $err_msg = '<span style="color: red">Error: Bad input. Try again</span>';
 
-    if($oldpassword!="" and $password!="" and $password == $password2) {
+    if($password!="" and $password == $password2) {
       $stored_crypto = $config["admins"][$username];
       $entered_crypto = crypt($oldpassword, $stored_crypto);
-      if($entered_crypto == $stored_crypto) {
+      if($stored_crypto == "" or $entered_crypto == $stored_crypto) {
 	$crypto = crypt($password);
 	$config['admins'][$username] = $crypto;
-        setcookie("id", $crypto, time()+$config["timeout"]);
+	setcookie("u", $username, time()+$config["timeout"]);
+	setcookie("ph", $crypto, time()+$config["timeout"]);
 	mb_write_config();
 	mb_redirect($to="?cmd=admins");
       }
