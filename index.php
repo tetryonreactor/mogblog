@@ -323,12 +323,15 @@ function mb_render_atom() {
 <?xml version="1.0" encoding="UTF-8"?>
 <feed xml:lang="en-US" xmlns="http://www.w3.org/2005/Atom"> 
   <title>[:mb:main_title:]</title>
+  <id>[:mb:base_abs_url:]/</id>
   <link href="[:mb:atom_abs_url:]" rel="self" />
   <link href="[:mb:base_abs_url:]/" />
   <updated>[:mb:atom_now:]</updated>
+  <author><name>A. Blogger</name></author>
 [:mb:articles{:]
   <entry>
     <title>[:mb:title:]</title>
+    <id>[:mb:base_abs_url:]/[:mb:url:]</id>
     <link href="[:mb:base_abs_url:]/[:mb:url:]" />
     <updated>[:mb:atom_date:]</updated>
     <content type="html">
@@ -337,6 +340,7 @@ function mb_render_atom() {
   </entry>
 [:mb:}articles:]
 </feed>
+
 END;
 }
 
